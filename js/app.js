@@ -593,7 +593,7 @@ function conflict(c,ignore){
   if(c.estado==="cancelada")return null;const s=toMin(c.hora),e=s+(+c.duracion||60);
   for(const o of Object.values(S.citas)){if(o.id===ignore||o.fecha!==c.fecha||o.estado==="cancelada")continue;
     const os=toMin(o.hora),oe=os+(+o.duracion||60);
-    if(s<oe&&os<e)return `Ya hay una cita de ${o.hora} a ${minToH(oe)} el ${fShort(c.fecha)} con ${nombre(S.pacientes[o.pacienteId])}.`}
+    if(s<oe&&os<e&&o.pacienteId===c.pacienteId)return `${nombre(S.pacientes[c.pacienteId])} ya tiene una cita de ${o.hora} a ${minToH(oe)} el ${fShort(c.fecha)}.`}
   return null;
 }
 $("#f-cita").addEventListener("submit",async e=>{
