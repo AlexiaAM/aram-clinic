@@ -248,7 +248,7 @@ function render(){
 
 function emptyClinic(){
   return `<div class="empty"><h3>Aún no hay pacientes registrados</h3><p>Registra tu primer paciente para empezar a llevar su historial y agendar citas.</p>
-  <div class="row"><button class="btn primary" data-act="new-pac">Registrar paciente</button>${S.mode!=="demo"?`<button class="btn" data-act="seed" ${S.seeding?"disabled":""}>${S.seeding?"Cargando ejemplos…":"Cargar datos de ejemplo"}</button>`:""}</div></div>`;
+  <div class="row"><button class="btn primary" data-act="new-pac">Registrar paciente</button></div></div>`;
 }
 function setupNotice(){
   if(S.config.fisioterapeuta&&S.config.precioSesion!==""&&S.config.precioSesion!=null)return "";
