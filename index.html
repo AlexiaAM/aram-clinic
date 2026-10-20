@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ARAM Rehabilitación</title>
+<meta name="description" content="Pacientes, historial clínico, citas, finanzas y reportes de la clínica de rehabilitación física ARAM.">
+<meta name="theme-color" content="#1D5C8A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ARAM">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/icono-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body class="locked">
+<!-- Pantalla: inicio de sesión -->
+<div class="auth" id="auth" hidden>
+  <form class="auth-card" id="f-login" novalidate>
+    <div class="brand"><svg width="36" height="36" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><path d="M8 21c3-1 4-4 5-7s2-6 4-6 3 3 3 6" stroke="var(--accent-fg)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="21" cy="21" r="2.4" fill="var(--accent-fg)"/></svg><h1>ARAM<small>Clínica de rehabilitación física</small></h1></div>
+    <label class="f">Correo<input id="l-email" name="email" type="email" autocomplete="username" required></label>
+    <label class="f">Contraseña<input id="l-pass" name="password" type="password" autocomplete="current-password" required></label>
+    <p class="err" id="login-err" role="alert"></p>
+    <button class="btn primary" type="submit" style="justify-content:center">Entrar</button>
+  </form>
+</div>
+
+<!-- Pantalla: falta configurar Supabase -->
+<div class="auth" id="setup" hidden>
+  <div class="auth-card">
+    <div class="brand"><svg width="36" height="36" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><path d="M8 21c3-1 4-4 5-7s2-6 4-6 3 3 3 6" stroke="var(--accent-fg)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="21" cy="21" r="2.4" fill="var(--accent-fg)"/></svg><h1>ARAM<small>Configuración pendiente</small></h1></div>
+    <p style="margin:0">La aplicación todavía no está conectada a la base de datos.</p>
+    <ol>
+      <li>Abre el archivo <code>js/config.js</code>.</li>
+      <li>Pega la <b>Project URL</b> y la <b>anon public key</b> de tu proyecto de Supabase (Project Settings → API).</li>
+      <li>Guarda, sube el cambio a GitHub y recarga esta página.</li>
+    </ol>
+    <p class="muted" style="margin:0;font-size:.88rem">Los pasos completos están en el archivo README.md.</p>
+  </div>
+</div>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><path d="M8 21c3-1 4-4 5-7s2-6 4-6 3 3 3 6" stroke="var(--accent-fg)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="21" cy="21" r="2.4" fill="var(--accent-fg)"/></svg>
+      <h1>ARAM<small>Clínica de rehabilitación física</small></h1>
+    </div>
+    <nav class="tabs" aria-label="Secciones">
+      <a href="#hoy" data-tab="hoy">Hoy</a>
+      <a href="#pacientes" data-tab="pacientes">Pacientes</a>
+      <a href="#citas" data-tab="citas">Citas</a>
+      <a href="#finanzas" data-tab="finanzas">Finanzas</a>
+      <a href="#reportes" data-tab="reportes">Reportes</a>
+      <button class="gear" type="button" data-act="ajustes">Ajustes</button>
+      <button class="gear" type="button" data-act="logout">Salir</button>
+    </nav>
+  </div>
+</header>
+<div class="banner" id="banner" hidden><div class="wrap" id="banner-inner"></div></div>
+<main class="wrap" id="main"><p class="muted">Cargando…</p></main>
+
+<!-- Diálogo: paciente -->
+<dialog id="dlg-paciente"><form id="f-paciente" novalidate>
+  <div class="dlg-head"><h2 id="dp-title">Nuevo paciente</h2><button type="button" class="btn ghost" data-close>Cerrar</button></div>
+  <div class="dlg-body">
+    <fieldset><legend>Datos personales</legend>
+      <div class="grid g3">
+        <label class="f"><span class="req">Nombre</span><input id="p-nombre" name="nombre" required></label>
+        <label class="f"><span class="req">Apellidos</span><input id="p-apellidos" name="apellidos" required></label>
+        <label class="f">Documento de identidad<input id="p-documento" name="documento"></label>
+        <label class="f">Fecha de nacimiento<input id="p-nacimiento" name="nacimiento" type="date"></label>
+        <label class="f">Sexo<select id="p-sexo" name="sexo"><option value="">—</option><option>Femenino</option><option>Masculino</option><option>Otro</option></select></label>
+        <label class="f">Ocupación<input id="p-ocupacion" name="ocupacion"></label>
+        <label class="f">Teléfono<input id="p-telefono" name="telefono" type="tel"></label>
+        <label class="f">Correo<input id="p-email" name="email" type="email"></label>
+        <label class="f">Dirección<input id="p-direccion" name="direccion"></label>
+        <label class="f">Contacto de emergencia<input id="p-contacto" name="contactoEmergencia"></label>
+        <label class="f">Teléfono de emergencia<input id="p-telemerg" name="telEmergencia" type="tel"></label>
+        <label class="f">Aseguradora / póliza<input id="p-aseguradora" name="aseguradora"></label>
+      </div>
+    </fieldset>
+    <fieldset><legend>Información clínica</legend>
+      <div class="grid g3">
+        <label class="f span2"><span class="req">Diagnóstico principal</span><input id="p-diagnostico" name="diagnostico" required placeholder="Ej.: Esguince de tobillo grado II"></label>
+        <label class="f">Médico que refiere<input id="p-medico" name="medicoReferente"></label>
+        <label class="f">Sesiones prescritas<input id="p-sesiones" name="sesionesPrescritas" type="number" min="0" max="200"></label>
+        <label class="f">Estado del tratamiento<select id="p-estado" name="estado"><option value="activo">En tratamiento</option><option value="alta">Dado de alta</option><option value="pausa">En pausa</option></select></label>
+        <label class="f">Fecha de ingreso<input id="p-creado" name="creado" type="date"></label>
+        <label class="f span3">Alergias<input id="p-alergias" name="alergias" placeholder="Ninguna conocida"></label>
+        <label class="f span3">Antecedentes médicos y quirúrgicos<textarea id="p-antecedentes" name="antecedentes"></textarea></label>
+        <label class="f span3">Medicamentos actuales<textarea id="p-medicamentos" name="medicamentos"></textarea></label>
+        <label class="f span3">Notas<textarea id="p-notas" name="notas"></textarea></label>
+      </div>
+    </fieldset>
+  </div>
+  <div class="dlg-foot"><span class="err" id="dp-err"></span><button type="button" class="btn" data-close>Cancelar</button><button class="btn primary" type="submit">Guardar paciente</button></div>
+</form></dialog>
+
+<!-- Diálogo: cita -->
+<dialog id="dlg-cita"><form id="f-cita" novalidate>
+  <div class="dlg-head"><h2 id="dc-title">Nueva cita</h2><button type="button" class="btn ghost" data-close>Cerrar</button></div>
+  <div class="dlg-body">
+    <div class="grid g3">
+      <label class="f span3"><span class="req">Paciente</span><select id="c-paciente" name="pacienteId" required></select></label>
+      <label class="f"><span class="req">Fecha</span><input id="c-fecha" name="fecha" type="date" required></label>
+      <label class="f"><span class="req">Hora</span><input id="c-hora" name="hora" type="time" step="900" required></label>
+      <label class="f">Duración<select id="c-duracion" name="duracion"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option><option value="90">90 min</option></select></label>
+      <label class="f span2"><span class="req">Tipo de terapia</span><input id="c-tipo" name="tipo" list="dl-tipos" required></label>
+      <label class="f">Estado<select id="c-estado" name="estado"><option value="programada">Programada</option><option value="confirmada">Confirmada</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option><option value="no_asistio">No asistió</option></select></label>
+      <p class="sub spanall">Cobro</p>
+      <label class="f">Monto<input id="c-monto" name="monto" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label class="f">Estado del pago<select id="c-pago" name="pago"><option value="pendiente">Por cobrar</option><option value="pagado">Pagado</option></select></label>
+      <label class="f">Método de pago<select id="c-metodo" name="metodo"><option value="">—</option><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option><option>Seguro</option></select></label>
+      <label class="f span3">Notas<textarea id="c-notas" name="notas" placeholder="Indicaciones, motivo de cancelación, etc."></textarea></label>
+      <label class="f" id="c-repetir-wrap">Repetir cada semana<select id="c-repetir" name="repetir"><option value="0">No repetir</option><option value="2">2 semanas</option><option value="4">4 semanas</option><option value="6">6 semanas</option><option value="8">8 semanas</option><option value="10">10 semanas</option></select></label>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="err" id="dc-err"></span><button type="button" class="btn danger" id="dc-delete" hidden>Eliminar cita</button><button type="button" class="btn" data-close>Cancelar</button><button class="btn primary" type="submit">Guardar cita</button></div>
+</form></dialog>
+
+<!-- Diálogo: historial -->
+<dialog id="dlg-hist"><form id="f-hist" novalidate>
+  <div class="dlg-head"><h2 id="dh-title">Nueva entrada de historial</h2><button type="button" class="btn ghost" data-close>Cerrar</button></div>
+  <div class="dlg-body">
+    <div class="grid g2">
+      <label class="f"><span class="req">Fecha</span><input id="h-fecha" name="fecha" type="date" required></label>
+      <label class="f">Tipo de registro<select id="h-tipo" name="tipo"><option>Evaluación inicial</option><option selected>Nota de sesión</option><option>Reevaluación</option><option>Alta</option><option>Interconsulta</option></select></label>
+      <div class="spanall" style="display:flex;flex-direction:column;gap:6px;font-size:.85rem;color:var(--muted);font-weight:700">Dolor (escala EVA 0–10)
+        <div class="eva-pick" id="h-eva"></div>
+      </div>
+      <label class="f spanall">Motivo / subjetivo<textarea id="h-motivo" name="motivo" placeholder="Lo que refiere el paciente"></textarea></label>
+      <label class="f spanall">Evaluación / hallazgos<textarea id="h-hallazgos" name="hallazgos" placeholder="Rango de movimiento, fuerza, pruebas especiales…"></textarea></label>
+      <label class="f spanall">Tratamiento aplicado<textarea id="h-tratamiento" name="tratamiento" placeholder="Técnicas, agentes físicos, ejercicios"></textarea></label>
+      <label class="f spanall">Plan / indicaciones<textarea id="h-plan" name="plan" placeholder="Ejercicios en casa, próxima meta"></textarea></label>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="err" id="dh-err"></span><button type="button" class="btn danger" id="dh-delete" hidden>Eliminar entrada</button><button type="button" class="btn" data-close>Cancelar</button><button class="btn primary" type="submit">Guardar entrada</button></div>
+</form></dialog>
+
+<!-- Diálogo: gasto -->
+<dialog id="dlg-gasto" class="narrow"><form id="f-gasto" novalidate>
+  <div class="dlg-head"><h2 id="dg-title">Nuevo gasto</h2><button type="button" class="btn ghost" data-close>Cerrar</button></div>
+  <div class="dlg-body">
+    <div class="grid g2">
+      <label class="f spanall"><span class="req">Concepto</span><input id="g-concepto" name="concepto" required placeholder="Ej.: Mantenimiento del equipo de ultrasonido"></label>
+      <label class="f"><span class="req">Fecha</span><input id="g-fecha" name="fecha" type="date" required></label>
+      <label class="f"><span class="req">Monto</span><input id="g-monto" name="monto" type="number" min="0" step="0.01" inputmode="decimal" required></label>
+      <label class="f">Categoría<select id="g-categoria" name="categoria"></select></label>
+      <label class="f">Método de pago<select id="g-metodo" name="metodo"><option value="">—</option><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select></label>
+      <label class="f spanall">Proveedor<input id="g-proveedor" name="proveedor"></label>
+      <label class="f spanall">Notas<textarea id="g-notas" name="notas" placeholder="Número de factura, detalle del servicio…"></textarea></label>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="err" id="dg-err"></span><button type="button" class="btn danger" id="dg-delete" hidden>Eliminar gasto</button><button type="button" class="btn" data-close>Cancelar</button><button class="btn primary" type="submit">Guardar gasto</button></div>
+</form></dialog>
+
+<!-- Diálogo: otra entrada -->
+<dialog id="dlg-ingreso" class="narrow"><form id="f-ingreso" novalidate>
+  <div class="dlg-head"><h2 id="di-title">Registrar entrada</h2><button type="button" class="btn ghost" data-close>Cerrar</button></div>
+  <div class="dlg-body">
+    <div class="grid g2">
+      <label class="f spanall"><span class="req">Concepto</span><input id="i-concepto" name="concepto" required placeholder="Ej.: Pomada de diclofenaco 60 g"></label>
+      <label class="f">Tipo de entrada<select id="i-categoria" name="categoria"></select></label>
+      <label class="f"><span class="req">Fecha</span><input id="i-fecha" name="fecha" type="date" required></label>
+      <label class="f">Cantidad<input id="i-cantidad" name="cantidad" type="number" min="1" step="1" inputmode="numeric"></label>
+      <label class="f">Precio unitario<input id="i-precio" name="precio" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label class="f"><span class="req">Total</span><input id="i-monto" name="monto" type="number" min="0" step="0.01" inputmode="decimal" required></label>
+      <label class="f">Método de pago<select id="i-metodo" name="metodo"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select></label>
+      <label class="f spanall">Paciente (opcional)<select id="i-paciente" name="pacienteId"></select></label>
+      <label class="f spanall">Notas<textarea id="i-notas" name="notas" placeholder="Lote, marca, detalle de la venta…"></textarea></label>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="err" id="di-err"></span><button type="button" class="btn danger" id="di-delete" hidden>Eliminar entrada</button><button type="button" class="btn" data-close>Cancelar</button><button class="btn primary" type="submit">Guardar entrada</button></div>
+</form></dialog>
+
+<!-- Diálogo: ajustes -->
+<dialog id="dlg-ajustes" class="narrow"><form id="f-ajustes" novalidate>
+  <div class="dlg-head"><h2>Ajustes de la clínica</h2><button type="button" class="btn ghost" data-close>Cerrar</button></div>
+  <div class="dlg-body">
+    <div class="grid g2">
+      <label class="f spanall">Nombre del fisioterapeuta<input id="a-fisio" name="fisioterapeuta" placeholder="Ej.: Lic. Andrea Morales"></label>
+      <label class="f">Precio por sesión<input id="a-precio" name="precioSesion" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label class="f">Símbolo de moneda<input id="a-moneda" name="moneda" maxlength="4" placeholder="$"></label>
+      <p class="muted spanall" id="a-usuario" style="margin:0;font-size:.88rem"></p>
+      <p class="muted spanall" style="margin:0;font-size:.88rem">El precio por sesión se usa como monto inicial de cada cita nueva; puedes cambiarlo en cada cita.</p>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="err" id="da-err"></span><button type="button" class="btn" data-close>Cancelar</button><button class="btn primary" type="submit">Guardar ajustes</button></div>
+</form></dialog>
+
+<!-- Diálogo: confirmación -->
+<dialog id="dlg-confirm" class="narrow"><form method="dialog">
+  <div class="dlg-head"><h2 id="cf-title">¿Confirmar?</h2></div>
+  <div class="dlg-body"><p id="cf-text" style="margin:0"></p></div>
+  <div class="dlg-foot"><button class="btn" value="no">Cancelar</button><button class="btn danger" value="si" id="cf-ok">Eliminar</button></div>
+</form></dialog>
+
+<datalist id="dl-tipos"></datalist>
+<div class="toast" id="toast" hidden role="status"></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
